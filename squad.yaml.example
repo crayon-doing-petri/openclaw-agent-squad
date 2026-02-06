@@ -1,0 +1,104 @@
+# Agent Squad Configuration
+# Copy to squad.yaml and customize
+
+squad:
+  name: "SiteGPT Marketing Squad"
+  description: "Content and marketing automation team"
+  
+  # Shared state backend: convex | sqlite | filesystem
+  backend:
+    type: "convex"
+    # For Convex: set CONVEX_DEPLOY_KEY env var or configure in .env
+    # For SQLite: set SQLITE_PATH (default: ./shared-state/squad.db)
+    # For Filesystem: set FS_BASE_PATH (default: ./shared-state/fs/)
+  
+  # Heartbeat schedule (minutes between checks)
+  heartbeat_interval: 15
+  
+  # Daily standup settings
+  standup:
+    enabled: true
+    cron: "30 23 * * *"  # 11:30 PM daily
+    channel: "telegram"  # Where to send standup reports
+    
+  # Notification daemon (for @mentions)
+  notifications:
+    enabled: true
+    poll_interval_seconds: 30
+
+# Agent Definitions
+agents:
+  - name: "jarvis"
+    display_name: "Jarvis"
+    role: "squad-lead"
+    template: "squad-lead"
+    schedule: "*/15 * * * *"  # Every 15 min
+    description: "Coordinates the squad, delegates tasks, monitors progress"
+    tools:
+      - all
+    can:
+      - delegate
+      - assign_tasks
+      - review_all_work
+    
+  - name: "shuri"
+    display_name: "Shuri"
+    role: "product-analyst"
+    template: "researcher"
+    schedule: "2-59/15 * * * *"  # Every 15 min, offset by 2
+    description: "Skeptical tester, finds edge cases, competitive analysis"
+    specialty: "UX testing and competitive research"
+    
+  - name: "fury"
+    display_name: "Fury"
+    role: "customer-researcher"
+    template: "researcher"
+    schedule: "4-59/15 * * * *"  # Offset by 4
+    description: "Deep researcher, provides receipts for every claim"
+    specialty: "G2 reviews, customer complaints, market research"
+    
+  - name: "vision"
+    display_name: "Vision"
+    role: "seo-analyst"
+    template: "researcher"
+    schedule: "6-59/15 * * * *"
+    description: "Thinks in keywords and search intent"
+    specialty: "Keyword research, content optimization"
+    
+  - name: "loki"
+    display_name: "Loki"
+    role: "content-writer"
+    template: "writer"
+    schedule: "8-59/15 * * * *"
+    description: "Words are his craft. Pro-Oxford comma, anti-passive voice"
+    specialty: "Blog posts, long-form content"
+    style: "Editorial, opinionated"
+    
+  - name: "friday"
+    display_name: "Friday"
+    role: "developer"
+    template: "developer"
+    schedule: "10-59/15 * * * *"
+    description: "Clean, tested, documented code"
+    specialty: "Full-stack development, automation scripts"
+
+# Shared tools all agents can use
+shared_tools:
+  - filesystem
+  - web_search
+  - browser
+  - shell
+
+# Integration settings
+integrations:
+  telegram:
+    enabled: true
+    # Squad lead (jarvis) connects here for direct control
+    
+  discord:
+    enabled: false
+    # Optional: for team visibility
+    
+  convex:
+    enabled: true
+    schema_path: "./shared-state/convex/schema.ts"
