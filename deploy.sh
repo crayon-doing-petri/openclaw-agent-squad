@@ -579,8 +579,113 @@ EOF
     log "Tools created in tools/"
 }
 
+# Deploy single agent
+# Usage: deploy_agent <name>
+deploy_single_agent() {
+    local name=$1
+    
+    log "Deploying single agent: $name"
+    
+    # Find agent index
+    local agent_count=$(yq -r '.agents | length' "$SQUAD_FILE")
+    local idx="null"
+    
+    for ((i=0; i<AGENT_COUNT; i++)); do
+        local agent_name=$(yq -r ".agents[$i].name" "$SQUAD_FILE")
+        if [[ "$agent_name" == "$name" ]]; then
+            idx=$i
+            break
+        fi
+    done
+    
+    if [[ "$idx" == "null" ]]; then
+        error "Agent '$name' not found in $SQUAD_FILE"
+    fi
+    
+    local ROLE=$(yq -r ".agents[$idx].role" "$SQUAD_FILE")
+    local TEMPLATE=$(yq -r ".agents[$idx].template" "$SQUAD_FILE")
+    local SCHEDULE=$(yq -r ".agents[$idx].schedule" "$SQUAD_FILE")
+    
+    # Create agent directory
+    log "Creating agent directory: agents/$name/"
+    mkdir -p "agents/$name"
+    
+    # Generate SOUL.md
+    generate_soul "$name" "$ROLE" "$TEMPLATE" "$idx"
+    
+    # Generate AGENTS.md
+    generate_agents_manual "$name" "$ROLE" "$BACKEND_TYPE"
+    
+    # Generate cron script
+    generate_cron "$name" "$SCHEDULE"
+    
+    # Create workspace structure
+    mkdir -p "agents/$name/memory"
+    mkdir -p "agents/$name/tools"
+    
+    # Install single cron
+    log "Installing cron job..."
+    openclaw cron remove --id "${name}-heartbeat" 2>/dev/null || true
+    
+    openclaw cron add \
+        --name "${name}-heartbeat" \
+        --cron "$SCHEDULE" \
+        --session "isolated" \
+        --message "HEARTBEAT: Check shared state for tasks and @mentions. Read agents/${name}/memory/WORKING.md. Reply HEARTBEAT_OK if nothing needs attention." \
+        2>/dev/null || warn "Failed to install cron (openclaw may not be running)"
+    
+    log "Agent '$name' deployed successfully!"
+    log "  Session key: agent:${ROLE}:${name}"
+    log "  Schedule: $SCHEDULE"
+    log "  Next: Agent will wake on schedule, or run 'openclaw sessions send --session agent:${ROLE}:${name} --message HEARTBEAT' to test"
+}
+
 # Main deployment
 main() {
+    # Handle --agent flag for single agent deploy
+    if [[ "$1" == "--agent" && -n "$2" ]]; then
+        check_deps
+        parse_squad
+        deploy_single_agent "$2"
+        exit 0
+    fi
+    
+    # Handle --help
+    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+        cat << 'EOF'
+Agent Squad Deployment
+
+USAGE:
+  ./deploy.sh               Deploy all agents from squad.yaml
+  ./deploy.sh --agent NAME  Deploy single agent (for incremental adds)
+  ./deploy.sh --help        Show this help
+
+EXAMPLES:
+  # First-time setup - deploy entire squad
+  ./deploy.sh
+
+  # Add a new agent incrementally
+  ./manage.sh add ghost writer --specialty "SEO content"
+  ./deploy.sh --agent ghost
+
+  # Regenerate one agent
+  ./deploy.sh --agent jarvis
+
+INCREMENTAL WORKFLOW:
+  1. Start with 2 agents in squad.yaml
+  2. ./deploy.sh
+  3. Later: ./manage.sh add researcher3 researcher
+  4. ./deploy.sh --agent researcher3
+  5. (Old agents untouched, new one joins the squad)
+
+For more control, use ./manage.sh:
+  ./manage.sh status    - Check all agents
+  ./manage.sh wizard    - Interactive add
+  ./manage.sh remove    - Remove an agent
+EOF
+        exit 0
+    fi
+    
     echo "================================"
     echo "  Agent Squad Deployment"
     echo "================================"
@@ -588,6 +693,22 @@ main() {
     
     check_deps
     parse_squad
+    
+    # Check if incremental or full deploy
+    local deployed_count=$(ls -1 agents/ 2>/dev/null | wc -l)
+    local squad_count=$(yq -r '.agents | length' "$SQUAD_FILE")
+    
+    if [[ "$deployed_count" -gt 0 && "$deployed_count" -lt "$squad_count" ]]; then
+        warn "Partial deployment detected ($deployed_count of $squad_count agents)"
+        warn "Run './manage.sh status' to see what's missing"
+        echo ""
+        read -p "Continue with full deployment? (Y/n): " confirm
+        if [[ "$confirm" == "n" || "$confirm" == "N" ]]; then
+            echo "Use './deploy.sh --agent <name>' to deploy specific agents"
+            exit 0
+        fi
+    fi
+    
     generate_agents
     setup_backend
     create_tools
@@ -603,8 +724,11 @@ main() {
     echo "  3. Start OpenClaw gateway if not running"
     echo "  4. Agents will begin checking in on their schedules"
     echo ""
-    echo "To add crons manually if auto-install failed:"
-    echo "  openclaw cron list"
+    echo "Management commands:"
+    echo "  ./manage.sh status      - Check squad status"
+    echo "  ./manage.sh add         - Add a new agent"
+    echo "  ./manage.sh wizard      - Interactive agent creation"
+    echo "  ./manage.sh remove      - Remove an agent"
     echo ""
 }
 

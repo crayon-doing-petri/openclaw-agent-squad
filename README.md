@@ -8,12 +8,16 @@ Based on the Mission Control architecture by @pbteja1998 (SiteGPT), adapted for 
 
 ```bash
 # 1. Clone this pattern
-cp -r agent-squad-pattern ~/Projects/my-squad
+cp -r agent-squad ~/Projects/my-squad
 cd ~/Projects/my-squad
 
 # 2. Configure your squad (edit squad.yaml)
 # 3. Deploy agents
 ./deploy.sh
+
+# 4. Add more agents over time
+./manage.sh add researcher2 researcher --specialty "competitive intel"
+./deploy.sh --agent researcher2
 ```
 
 ## Architecture
@@ -34,33 +38,59 @@ cd ~/Projects/my-squad
 └─────────────────────────────────────────────────────────┘
 ```
 
+## Incremental Agent Management
+
+Start small, grow as needed:
+
+```bash
+# Start with 2 agents
+./deploy.sh
+
+# Add 1 agent later
+./manage.sh add quant researcher --specialty "BTC/SPX strategies"
+./deploy.sh --agent quant
+
+# Add via interactive wizard
+./manage.sh wizard
+
+# Check status anytime
+./manage.sh status
+
+# Remove an agent
+./manage.sh remove quant --yes
+```
+
 ## Directory Structure
 
 ```
-agent-squad-pattern/
-├── README.md                 # This file
-├── squad.yaml               # Define your agents here
-├── deploy.sh                # One-command deployment
-├── agents/                  # Generated agent configs
+agent-squad/
+├── README.md                # This file
+├── SETUP.md                 # Detailed setup guide
+├── squad.yaml              # Define your agents here
+├── deploy.sh               # Deploy all or single agent
+├── manage.sh               # Add/remove/clone agents
+├── agents/                 # Generated agent configs
 │   ├── jarvis/
 │   │   ├── SOUL.md
 │   │   ├── AGENTS.md
-│   │   └── cron.sh
-│   ├── shuri/
+│   │   └── memory/
 │   └── ...
-├── templates/               # Reusable SOUL templates
-│   ├── squad-lead.md
-│   ├── researcher.md
-│   ├── writer.md
-│   └── developer.md
-├── shared-state/            # Task/message backend
-│   ├── convex/             # Recommended: Convex backend
-│   ├── sqlite/             # Lightweight file-based
-│   └── filesystem/         # Simple file-based
-└── tools/                   # Shared utilities
-    ├── notify.sh           # @mention notifications
-    ├── standup.sh          # Daily standup generator
-    └── heartbeat-check.sh  # Agent health monitor
+├── templates/              # 8 SOUL templates
+│   ├── squad-lead.md       # Coordinator
+│   ├── researcher.md       # Deep research
+│   ├── analyst.md          # Data analysis
+│   ├── writer.md           # Content creation
+│   ├── developer.md        # Code/scripts
+│   ├── designer.md         # Visual design
+│   ├── social-media.md     # Social/growth
+│   └── support.md          # Help/documentation
+├── shared-state/           # Backend options
+│   ├── convex/
+│   ├── sqlite/
+│   └── filesystem/
+└── tools/                  # Shared utilities
+    ├── notify.sh
+    └── standup.sh
 ```
 
 ## How It Works
