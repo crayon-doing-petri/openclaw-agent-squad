@@ -5,14 +5,30 @@ squad:
   name: "SiteGPT Marketing Squad"
   description: "Content and marketing automation team"
   
-  # Shared state backend: convex | sqlite | filesystem
+  # Shared state backend: sqlite | postgres | convex | filesystem
   # This is the SOURCE OF TRUTH for agent coordination
   # Agents communicate via database, NOT Discord directly
+  #
+  # Quick guide:
+  #   sqlite    -> Fastest setup, single machine (recommended for starting)
+  #   postgres  -> Production, multi-machine, SQL standard (recommended for scale)
+  #   convex    -> Real-time sync, hosted, serverless (alternative to SQL)
+  #   filesystem -> No database, just files (debugging only)
   backend:
-    type: "convex"
-    # For Convex: set CONVEX_DEPLOY_KEY env var or configure in .env
-    # For SQLite: set SQLITE_PATH (default: ./shared-state/squad.db)
-    # For Filesystem: set FS_BASE_PATH (default: ./shared-state/fs/)
+    type: "sqlite"  # Change to: postgres | convex | filesystem
+    
+    # SQLite options (default: shared-state/sqlite/squad.db)
+    # sqlite_path: "./shared-state/sqlite/squad.db"
+    
+    # PostgreSQL options (uncomment and fill for postgres backend)
+    # host: "localhost"
+    # port: 5432
+    # database: "agent_squad"
+    # username: "squad_user"
+    # password: ""  # Set via PG_PASSWORD env var or 1Password
+    
+    # Convex options (set CONVEX_DEPLOY_KEY env var)
+    # convex_url: ""  # Set via CONVEX_URL env var
   
   # Heartbeat schedule (minutes between checks)
   heartbeat_interval: 15

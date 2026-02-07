@@ -193,6 +193,21 @@ sqlite3 shared-state/squad.db "SELECT * FROM tasks WHERE status='inbox'"
 \`\`\`
 EOF
             ;;
+        postgres|postgresql)
+            cat >> "$agents_file" << EOF
+Access via PostgreSQL:
+\`\`\`bash
+# Interactive
+psql -h \$PG_HOST -U \$PG_USER -d agent_squad
+
+# Single query
+psql -h \$PG_HOST -U \$PG_USER -d agent_squad -c "SELECT * FROM tasks WHERE status='inbox'"
+
+# Or use the helper
+cd shared-state/postgres && ./query.sh "SELECT * FROM tasks WHERE status='inbox'"
+\`\`\`
+EOF
+            ;;
         filesystem)
             cat >> "$agents_file" << EOF
 Access via filesystem:
@@ -295,6 +310,9 @@ setup_backend() {
             ;;
         sqlite)
             setup_sqlite
+            ;;
+        postgres|postgresql)
+            setup_postgres
             ;;
         filesystem)
             setup_filesystem
@@ -444,6 +462,23 @@ EOF
     log "  Run: cd shared-state/sqlite && ./init.sh"
 }
 
+setup_postgres() {
+    log "Setting up PostgreSQL backend..."
+    
+    mkdir -p shared-state/postgres
+    
+    # Note: Schema already created in repo, just need to apply it
+    log "  PostgreSQL schema available in shared-state/postgres/schema.sql"
+    log "  Run the following to initialize:"
+    log "    cd shared-state/postgres && ./init.sh"
+    log ""
+    log "  Or with custom credentials:"
+    log "    PG_HOST=localhost PG_PORT=5432 PG_DATABASE=agent_squad PG_USER=squad_user ./init.sh"
+    log ""
+    log "  Query helper available:"
+    log "    cd shared-state/postgres && ./query.sh \"SELECT * FROM tasks;\""
+}
+
 setup_filesystem() {
     log "Setting up filesystem backend..."
     
@@ -537,6 +572,9 @@ while true; do
             ;;
         sqlite)
             UNDELIVERED=$(sqlite3 shared-state/squad.db "SELECT id, mentioned_agent_id, content FROM notifications WHERE delivered=0;")
+            ;;
+        postgres|postgresql)
+            UNDELIVERED=$(psql "$DATABASE_URL" -tAc "SELECT id, mentioned_agent_id, content FROM notifications WHERE delivered=false;")
             ;;
         filesystem)
             # Check fs/notifications/ for undelivered

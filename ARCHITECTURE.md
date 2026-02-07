@@ -28,6 +28,8 @@ This pattern separates **human communication** from **agent coordination** for r
 
 **Key principle:** Agents never depend on Discord. Discord is purely for human convenience.
 
+**Key principle for backends:** Agents use standard SQL. SQLite, PostgreSQL, and Convex (with SQL-like queries) all work interchangeably from the agent's perspective.
+
 ---
 
 ## Communication Flow: Example
@@ -74,7 +76,7 @@ This pattern separates **human communication** from **agent coordination** for r
 
 ---
 
-## Backend Decision Guide: SQLite vs Convex
+## Backend Decision Guide: SQLite vs PostgreSQL vs Convex
 
 ### When to Choose SQLite
 
@@ -128,17 +130,54 @@ npx convex dev  # Gets you a URL + deploy key
 
 ---
 
+### When to Choose PostgreSQL
+
+**Best for:**
+- ✅ Production, long-running squads
+- ✅ Multi-machine setups (agents on different VPS)
+- ✅ 5+ agents (concurrent writes, no locking)
+- ✅ SQL standard compliance
+- ✅ When you want to own your data (self-hosted)
+
+**Benefits over SQLite:**
+- Concurrent writes (no single-writer lock)
+- Network accessible (multiple machines)
+- Better backup tools (pg_dump)
+- Replication options (read replicas)
+- Production-grade reliability
+
+**Tradeoffs:**
+- Requires PostgreSQL installation
+- Need to create DB, user, set permissions
+- Network configuration if remote
+
+**Setup:**
+```bash
+cd shared-state/postgres
+./init.sh  # Creates DB, user, applies schema
+```
+
+**Or manual:**
+```bash
+sudo -u postgres psql -c "CREATE DATABASE agent_squad;"
+psql -U squad_user -d agent_squad -f schema.sql
+```
+
+---
+
 ### Decision Matrix
 
-| Situation | Choose |
-|-----------|--------|
-| "Just trying this out" | SQLite |
-| "Running on my laptop" | SQLite |
-| "Production trading squad" | Convex |
-| "Team of 10+ agents" | Convex |
-| "Want a web dashboard" | Convex |
-| "Zero external deps" | SQLite |
-| "Real-time updates critical" | Convex |
+| Situation | Choose | Why |
+|-----------|--------|-----|
+| "Just trying this out" | SQLite | 30 seconds to setup |
+| "Running on my laptop" | SQLite | No install needed |
+| "Single VPS, 2-5 agents" | SQLite | Simple, sufficient |
+| "Production, single VPS" | PostgreSQL | Do it right from start |
+| "Multi-machine agents" | PostgreSQL | Network accessible |
+| "5+ agents, concurrent writes" | PostgreSQL | No locking issues |
+| "Want hosted/managed" | Convex | Zero ops |
+| "Real-time sync critical" | Convex | Push subscriptions |
+| "Serverless/functions" | Convex | HTTP API |
 
 ---
 
