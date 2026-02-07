@@ -6,6 +6,8 @@ squad:
   description: "Content and marketing automation team"
   
   # Shared state backend: convex | sqlite | filesystem
+  # This is the SOURCE OF TRUTH for agent coordination
+  # Agents communicate via database, NOT Discord directly
   backend:
     type: "convex"
     # For Convex: set CONVEX_DEPLOY_KEY env var or configure in .env
@@ -25,6 +27,20 @@ squad:
   notifications:
     enabled: true
     poll_interval_seconds: 30
+  
+  # Discord Integration Options
+  # Option 1: Squad Lead Bridge (recommended for small squads)
+  #   Only Squad Lead has Discord, mirrors key events
+  # Option 2: Discord Relay (recommended for transparency)
+  #   Dedicated agent mirrors ALL activity to Discord
+  #   Agents work ONLY in database, relay provides transparency
+  discord:
+    enabled: true
+    channel: "agent-squad"  # Discord channel name
+    mode: "relay"  # "relay" or "squad-lead" or "none"
+    # relay: Always on, posts all activity (Option 2)
+    # squad-lead: Only Squad Lead posts (Option 1)
+    # none: No Discord integration (SQLite only)
 
 # Agent Definitions
 agents:
