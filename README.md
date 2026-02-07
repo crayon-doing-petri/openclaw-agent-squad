@@ -102,17 +102,28 @@ agent-squad/
     └── standup.sh
 ```
 
-## How It Works
+## Documentation
+
+| Document | What You'll Find |
+|----------|------------------|
+| **ARCHITECTURE.md** | Communication layers, SQLite vs Convex guide, Discord modes |
+| **SETUP.md** | Step-by-step installation and configuration |
+| **QUICKREF.md** | Common commands, troubleshooting, cheat sheet |
+| **squad.yaml.example** | Full configuration reference |
+
+## How It Works (Summary)
 
 1. **Define agents in `squad.yaml`** — name, role, personality, schedule
 2. **Deploy creates:**
    - Individual OpenClaw sessions for each agent
    - Custom SOUL.md for each role (from templates)
    - Staggered cron jobs for heartbeats
-   - Shared state backend (Convex recommended)
+   - Shared state backend (pick SQLite or Convex — see ARCHITECTURE.md)
 3. **Agents run on schedule**, check shared state for tasks/messages
 4. **Notification daemon** delivers @mentions to sleeping agents
 5. **Daily standup** compiles activity and sends summary
+
+**Key principle:** Agents coordinate via SQLite/Convex (always works). Discord is optional transparency layer (can fail without breaking squad).
 
 ## Core Concepts
 
@@ -134,8 +145,42 @@ agent:{role}:{name}  →  agent:researcher:fury
 - **Daily notes:** Raw logs of activity
 - **MEMORY.md:** Long-term curated knowledge
 
+## Backend Selection (Important)
+
+**SQLite** — Start here
+- ✅ Fastest setup (`./init.sh` and done)
+- ✅ Zero external dependencies
+- ✅ Great for 2-5 agents
+- ⚠️ Single writer at a time
+- ⚠️ No real-time sync
+
+**Convex** — Upgrade here for production
+- ✅ Real-time sync (instant updates)
+- ✅ Handles 10+ agents
+- ✅ Hosted (backups included)
+- ✅ Better for web dashboards
+- ⚠️ Requires `npm install` + deploy key
+- ⚠️ Internet dependency
+
+**See ARCHITECTURE.md for full decision matrix and migration guide.**
+
+## Quick Decision
+
+```bash
+# First squad? → SQLite
+squd:
+  backend:
+    type: "sqlite"
+
+# Production/multi-agent? → Convex  
+squad:
+  backend:
+    type: "convex"
+```
+
 ## Next Steps
 
-See `SETUP.md` for detailed installation instructions.
-
-See `squad.yaml.example` for configuration reference.
+1. Read **ARCHITECTURE.md** — Understand the communication layers
+2. Read **SETUP.md** — Installation and first deployment
+3. See **squad.yaml.example** — Configuration reference
+4. Keep **QUICKREF.md** handy — Day-to-day commands
