@@ -24,28 +24,36 @@
 ## Quick Start
 
 ```bash
-# 1. Copy this template to your project
-cp -r agent-squad-pattern ~/Projects/my-marketing-squad
-cd ~/Projects/my-marketing-squad
+# 1. Clone the pattern repo (keep as reference for updates)
+git clone https://github.com/crayon-doing-petri/openclaw-agent-squad.git
+cd openclaw-agent-squad
 
-# 2. Create your squad configuration
+# 2. Copy to your new squad directory
+cp -r ./ ~/Projects/my-marketing-squad
+
+# 3. Enter your squad and initialize it
+cd ~/Projects/my-marketing-squad
+git init
+git add . && git commit -m "init: my marketing squad"
+
+# 4. Create your squad configuration
 cp squad.yaml.example squad.yaml
 
-# 3. Edit squad.yaml with your agents, roles, schedules
+# 5. Edit squad.yaml with your agents, roles, schedules
 #    See squad.yaml.example for reference
 
-# 4. Deploy
+# 6. Deploy
 ./deploy.sh
 
-# 5. Start your backend (choose one):
+# 7. Start your backend (choose one):
 #    For Convex: cd shared-state/convex && npx convex dev
 #    For SQLite: cd shared-state/sqlite && ./init.sh
 #    For Filesystem: (no setup needed)
 
-# 6. Verify crons are installed
+# 8. Verify crons are installed
 openclaw cron list
 
-# 7. Start notification daemon (optional, for @mentions)
+# 9. Start notification daemon (optional, for @mentions)
 #    tmux new-session -d -s notifications "./tools/notify.sh"
 ```
 

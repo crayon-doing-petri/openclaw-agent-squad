@@ -7,15 +7,24 @@ Based on the Mission Control architecture by @pbteja1998 (SiteGPT), adapted for 
 ## Quick Start
 
 ```bash
-# 1. Clone this pattern
-cp -r agent-squad ~/Projects/my-squad
-cd ~/Projects/my-squad
+# 1. Clone the pattern repo (keep as reference)
+git clone https://github.com/crayon-doing-petri/openclaw-agent-squad.git
+cd openclaw-agent-squad
 
-# 2. Configure your squad (edit squad.yaml)
-# 3. Deploy agents
+# 2. Copy to your new squad directory
+cp -r ./ ~/Projects/my-first-squad
+
+# 3. Enter your squad and initialize it
+cd ~/Projects/my-first-squad
+git init
+git add . && git commit -m "init: my first squad"
+
+# 4. Configure and deploy
+cp squad.yaml.example squad.yaml
+# ...edit squad.yaml...
 ./deploy.sh
 
-# 4. Add more agents over time
+# 5. Add more agents over time
 ./manage.sh add researcher2 researcher --specialty "competitive intel"
 ./deploy.sh --agent researcher2
 ```
